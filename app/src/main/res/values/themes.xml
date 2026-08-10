@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Theme.CrystalOlympus" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/olympus_night</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges</item>
+    </style>
+
+    <style name="Theme.CrystalOlympus.Loading" parent="Theme.CrystalOlympus">
+        <item name="android:windowBackground">@color/olympus_deep_blue</item>
+    </style>
+
+</resources>

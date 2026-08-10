@@ -1,0 +1,29 @@
+# Gradle / Android
+.gradle/
+build/
+**/build/
+local.properties
+*.iml
+.idea/
+.cxx/
+.kotlin/
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Signing secrets — never commit
+keystore/
+keystore.properties
+*.jks
+*.keystore
+
+# OS / tooling
+.DS_Store
+Thumbs.db
+tools/preview/
+tools/preview_extra/
+tools/slices/
+*.log
