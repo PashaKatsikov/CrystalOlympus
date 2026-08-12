@@ -61,19 +61,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- AppsFlyer OneLink, claimed as a verified Android App Link.
-                 Verification reads https://crystalolympus.onelink.me/.well-known/
-                 assetlinks.json, which AppsFlyer serves from the SHA-256 signing
-                 fingerprints registered on the OneLink template — the debug
-                 fingerprint has to be among them for this to verify off Play. -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="crystalolympus.onelink.me" />
-            </intent-filter>
+            <!-- No OneLink App Link filter on purpose. Attribution and deferred
+                 deep links come off the wire, keyed by the AppsFlyer dev key and
+                 the bundle id, so the shell stays free of any one OneLink host
+                 and works with whatever template the account hands it. -->
         </activity>
 
         <activity

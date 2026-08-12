@@ -29,7 +29,13 @@ param(
     [switch]$Read,
 
     # Device advertising id (GAID). Only used by -Click.
-    [string]$Gaid = "5d8a8ccd-82b4-4821-a0eb-c9beace79dc0",
+    #
+    # This MUST be the GAID the device reports right now. It is user-resettable
+    # (Settings > Google > Ads), and a reset silently invalidates every click
+    # recorded against the old one: the install then reports a GAID that matches
+    # no click and AppsFlyer files it as Organic. Read the current value off
+    # `advertiserId` in the SDK's CONVERSION payload in logcat.
+    [string]$Gaid = "9d8f12b3-aa16-4aea-af73-4524bf1f308f",
 
     # AppsFlyer UID of the install. Only used by -Read. Get it from the device
     # (logcat, or AttrHub.getAppsFlyerId()). NOT the GAID.
