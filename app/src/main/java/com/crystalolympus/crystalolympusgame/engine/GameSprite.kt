@@ -29,15 +29,15 @@ enum class GameSprite(
     val preload: Boolean = true,
 ) {
     // --- Loading artwork, decoded by the loading screen itself ----------------------------------
-    LOADING_LANDSCAPE("Horizontal_Loading_Screen.webp", maxSize = 2400, trim = false, preload = false),
-    LOADING_PORTRAIT("Vertical_Loading_Screen.webp", maxSize = 2400, trim = false, preload = false),
+    LOADING_LANDSCAPE("Horizontal_Loading_Screen.webp", maxSize = 2048, trim = false, preload = false),
+    LOADING_PORTRAIT("Vertical_Loading_Screen.webp", maxSize = 2048, trim = false, preload = false),
 
     LOGO("Game_Name.webp", maxSize = 512),
 
     // --- Backgrounds ---------------------------------------------------------------------------
-    BG_TEMPLE_FLOOR("Ancient_Temple_Background_asset.webp", maxSize = 1200, trim = false),
-    BG_CLOUD_ISLANDS("Cloud_Islands_Background_asset.webp", maxSize = 1200, trim = false),
-    BG_OLYMPUS_SKY("Olympus_Sky_Background_asset.webp", maxSize = 1200, trim = false),
+    BG_TEMPLE_FLOOR("Ancient_Temple_Background_asset.webp", maxSize = 1024, trim = false),
+    BG_CLOUD_ISLANDS("Cloud_Islands_Background_asset.webp", maxSize = 1024, trim = false),
+    BG_OLYMPUS_SKY("Olympus_Sky_Background_asset.webp", maxSize = 1024, trim = false),
 
     // --- Heroes and bosses ---------------------------------------------------------------------
     // The shipped file names are shuffled: the "energy crystals" sheet holds the titan, and the

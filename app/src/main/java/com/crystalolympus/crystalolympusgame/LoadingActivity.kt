@@ -162,7 +162,10 @@ private fun LoadingScreen(resolveGate: Boolean, onFinished: (GateRouter.Outcome?
     // The backdrop has to match the current orientation, so it is decoded whenever that changes.
     LaunchedEffect(isLandscape) {
         val sprite = if (isLandscape) GameSprite.LOADING_LANDSCAPE else GameSprite.LOADING_PORTRAIT
-        background = GameAssets.loadSingle(context, sprite, maxSize = screenLongestEdge.coerceIn(720, 2400))
+        // Cap at 2048: it stays crisp on any phone screen while keeping the single
+        // largest texture within the limit weaker GPUs guarantee and shaving the
+        // peak allocation that a tight device can trip over on the way to the game.
+        background = GameAssets.loadSingle(context, sprite, maxSize = screenLongestEdge.coerceIn(720, 2048))
     }
 
     LaunchedEffect(Unit) {

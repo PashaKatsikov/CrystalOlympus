@@ -67,12 +67,17 @@ object GameAssets {
             }
             try {
                 for (sprite in sheetSprites) {
-                    sprites[sprite] = extract(sheet, sprite).asImageBitmap()
+                    // A single bad slice (a decoder quirk or an OutOfMemoryError on
+                    // a tight device) must not abort the whole preload and crash the
+                    // launch. Skip it; every consumer already tolerates a null sprite.
+                    runCatching { extract(sheet, sprite).asImageBitmap() }
+                        .onSuccess { sprites[sprite] = it }
+                        .onFailure { System.gc() }
                     done++
                     onProgress(done.toFloat() / total)
                 }
             } finally {
-                sheet.recycle()
+                runCatching { sheet.recycle() }
             }
         }
 
@@ -91,12 +96,11 @@ object GameAssets {
             val sampleSize = sampleSizeFor(context, sprite, maxSize)
             val sheet = decodeSheet(context, sprite.file, sampleSize) ?: return@withContext null
             val result = try {
-                extract(sheet, sprite, maxSize).asImageBitmap()
+                runCatching { extract(sheet, sprite, maxSize).asImageBitmap() }.getOrNull()
             } finally {
-                sheet.recycle()
+                runCatching { sheet.recycle() }
             }
-            sprites[sprite] = result
-            result
+            result?.also { sprites[sprite] = it }
         }
 
     /** Frees the loading artwork once the game itself is on screen. */
