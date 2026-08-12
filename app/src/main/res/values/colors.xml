@@ -3,4 +3,11 @@
     <color name="olympus_night">#FF05070F</color>
     <color name="olympus_deep_blue">#FF0B1428</color>
     <color name="ic_launcher_background">#FF102A55</color>
+
+    <!-- Gray flow -->
+    <color name="bg_dark">#3A0A0C</color>
+    <color name="bg_red">#6E0D12</color>
+    <color name="gold">#F2C14E</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
 </resources>

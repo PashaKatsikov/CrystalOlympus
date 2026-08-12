@@ -28,7 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.crystalolympus.crystalolympusgame.core.GameSprite
+import com.crystalolympus.crystalolympusgame.engine.GameSprite
 import com.crystalolympus.crystalolympusgame.data.PlayerProfile
 import com.crystalolympus.crystalolympusgame.game.model.EquipmentItem
 import com.crystalolympus.crystalolympusgame.game.model.EquipmentSlot

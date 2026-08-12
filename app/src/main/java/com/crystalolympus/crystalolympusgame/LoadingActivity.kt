@@ -49,8 +49,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.crystalolympus.crystalolympusgame.core.GameAssets
-import com.crystalolympus.crystalolympusgame.core.GameSprite
+import com.crystalolympus.crystalolympusgame.boot.OptInPrompt
+import com.crystalolympus.crystalolympusgame.boot.OrbitShell
+import com.crystalolympus.crystalolympusgame.boot.SignalLostScreen
+import com.crystalolympus.crystalolympusgame.engine.GameAssets
+import com.crystalolympus.crystalolympusgame.engine.GameSprite
+import com.crystalolympus.crystalolympusgame.push.Store
+import com.crystalolympus.crystalolympusgame.view.GateRouter
 import com.crystalolympus.crystalolympusgame.ui.theme.CrystalOlympusTheme
 import com.crystalolympus.crystalolympusgame.ui.theme.OlympusBrushes
 import com.crystalolympus.crystalolympusgame.ui.theme.OlympusColors
@@ -61,6 +66,11 @@ import kotlin.math.min
 /**
  * The one screen that is allowed to rotate freely. It decodes the artwork the rest of the game needs
  * and shows real progress while doing it, then hands over to [MainActivity].
+ *
+ * On an organic first launch it also runs the gray/white decision in the background
+ * (see [GateRouter]) so it is the single loading screen the user sees — the bar only
+ * fills to 100% once both the assets are ready and the decision is in, and the screen
+ * that follows is the game, the shell, or the offline screen accordingly.
  */
 class LoadingActivity : ComponentActivity() {
 
@@ -68,16 +78,47 @@ class LoadingActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val resolveGate = intent.getBooleanExtra(EXTRA_RESOLVE_GATE, false)
+
         setContent {
             CrystalOlympusTheme {
-                LoadingScreen(onFinished = ::openGame)
+                LoadingScreen(resolveGate = resolveGate, onFinished = ::go)
             }
         }
     }
 
+    /**
+     * @param outcome null means "just the game" (a returning native user, or any
+     *   launch not carrying the resolve flag); otherwise it is the resolved verdict.
+     */
+    private fun go(outcome: GateRouter.Outcome?) {
+        val next = when (outcome) {
+            is GateRouter.Outcome.Gray -> grayIntent(outcome.url)
+            is GateRouter.Outcome.Offline ->
+                Intent(this, SignalLostScreen::class.java).apply {
+                    if (!outcome.savedUrl.isNullOrBlank())
+                        putExtra(SignalLostScreen.EXTRA_RETURN_URL, outcome.savedUrl)
+                }
+            else -> Intent(this, MainActivity::class.java)
+        }
+        next.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+        startActivity(next)
+        fadeThrough()
+        finish()
+    }
+
+    /** Notification opt-in screen first, if it is still due; otherwise the shell. */
+    private fun grayIntent(url: String): Intent {
+        val vault = Store(applicationContext)
+        return if (vault.shouldShowNotifScreen()) {
+            Intent(this, OptInPrompt::class.java).putExtra(OptInPrompt.EXTRA_TARGET_URL, url)
+        } else {
+            Intent(this, OrbitShell::class.java).putExtra(OrbitShell.EXTRA_STREAM_URL, url)
+        }
+    }
+
     @Suppress("DEPRECATION")
-    private fun openGame() {
-        startActivity(Intent(this, MainActivity::class.java))
+    private fun fadeThrough() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             overrideActivityTransition(
                 OVERRIDE_TRANSITION_OPEN,
@@ -87,12 +128,17 @@ class LoadingActivity : ComponentActivity() {
         } else {
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
-        finish()
+    }
+
+    companion object {
+        /** Set by [com.crystalolympus.crystalolympusgame.view.LaunchGate] on an
+         *  organic first launch: run the gray decision here, not on a splash ahead. */
+        const val EXTRA_RESOLVE_GATE = "resolve_gate"
     }
 }
 
 @Composable
-private fun LoadingScreen(onFinished: () -> Unit) {
+private fun LoadingScreen(resolveGate: Boolean, onFinished: (GateRouter.Outcome?) -> Unit) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -101,6 +147,13 @@ private fun LoadingScreen(onFinished: () -> Unit) {
     var assetProgress by remember { mutableFloatStateOf(0f) }
     var assetsReady by remember { mutableStateOf(GameAssets.isPreloaded) }
     var displayedProgress by remember { mutableFloatStateOf(0f) }
+
+    // On an organic first launch the gray decision runs alongside the preload; the
+    // bar is not allowed to finish until it is in. When we are not resolving (a
+    // returning native user), the gate is "ready" from the start and the outcome
+    // stays null, meaning "straight to the game".
+    var gateOutcome by remember { mutableStateOf<GateRouter.Outcome?>(null) }
+    var gateReady by remember { mutableStateOf(!resolveGate) }
 
     val screenLongestEdge = with(configuration) {
         (max(screenWidthDp, screenHeightDp) * context.resources.displayMetrics.density).toInt()
@@ -116,6 +169,14 @@ private fun LoadingScreen(onFinished: () -> Unit) {
         launch {
             GameAssets.preloadAll(context) { fraction -> assetProgress = fraction }
             assetsReady = true
+        }
+        if (resolveGate) {
+            launch {
+                val activity = context as ComponentActivity
+                gateOutcome = runCatching { GateRouter(activity).resolveFirstLaunch() }
+                    .getOrDefault(GateRouter.Outcome.Native)
+                gateReady = true
+            }
         }
     }
 
@@ -133,8 +194,9 @@ private fun LoadingScreen(onFinished: () -> Unit) {
             val elapsed = (nowNanos - startNanos) / 1_000_000_000f
 
             val timeGate = elapsed / MINIMUM_VISIBLE_SECONDS
-            val everythingDone = assetsReady && background != null && elapsed >= MINIMUM_VISIBLE_SECONDS
-            val ceiling = if (everythingDone) 1f else min(0.97f, min(assetProgress, timeGate))
+            val everythingDone = assetsReady && background != null && gateReady &&
+                elapsed >= MINIMUM_VISIBLE_SECONDS
+            val ceiling = if (everythingDone) 1f else min(0.80f, min(assetProgress, timeGate))
 
             displayedProgress = if (everythingDone) {
                 min(1f, displayedProgress + delta * FINAL_FILL_PER_SECOND)
@@ -150,7 +212,7 @@ private fun LoadingScreen(onFinished: () -> Unit) {
 
         // Let one frame present the completely filled bar before the screen changes.
         withFrameNanos { }
-        onFinished()
+        onFinished(gateOutcome)
     }
 
     Box(Modifier.fillMaxSize().background(OlympusColors.DeepBlue)) {

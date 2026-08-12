@@ -1,7 +1,7 @@
 package com.crystalolympus.crystalolympusgame.game
 
 import androidx.compose.ui.graphics.Color
-import com.crystalolympus.crystalolympusgame.core.GameSprite
+import com.crystalolympus.crystalolympusgame.engine.GameSprite
 import com.crystalolympus.crystalolympusgame.game.model.CrystalType
 import com.crystalolympus.crystalolympusgame.game.model.EnemyType
 import com.crystalolympus.crystalolympusgame.game.model.FruitType

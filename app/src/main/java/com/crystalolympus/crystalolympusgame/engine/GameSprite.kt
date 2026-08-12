@@ -1,4 +1,4 @@
-package com.crystalolympus.crystalolympusgame.core
+package com.crystalolympus.crystalolympusgame.engine
 
 /**
  * Every drawable piece of art the game can show.

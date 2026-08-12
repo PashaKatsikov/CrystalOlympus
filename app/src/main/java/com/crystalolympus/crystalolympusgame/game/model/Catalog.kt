@@ -1,7 +1,7 @@
 package com.crystalolympus.crystalolympusgame.game.model
 
 import androidx.compose.ui.graphics.Color
-import com.crystalolympus.crystalolympusgame.core.GameSprite
+import com.crystalolympus.crystalolympusgame.engine.GameSprite
 import com.crystalolympus.crystalolympusgame.ui.theme.OlympusColors
 
 /** The five energy types that drive the combat system. */

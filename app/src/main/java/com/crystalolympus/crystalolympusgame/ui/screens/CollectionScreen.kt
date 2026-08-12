@@ -26,9 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.crystalolympus.crystalolympusgame.core.AudioEngine
-import com.crystalolympus.crystalolympusgame.core.GameSound
-import com.crystalolympus.crystalolympusgame.core.GameSprite
+import com.crystalolympus.crystalolympusgame.engine.AudioEngine
+import com.crystalolympus.crystalolympusgame.engine.GameSound
+import com.crystalolympus.crystalolympusgame.engine.GameSprite
 import com.crystalolympus.crystalolympusgame.data.PlayerProfile
 import com.crystalolympus.crystalolympusgame.game.model.CrystalType
 import com.crystalolympus.crystalolympusgame.game.model.EnemyType

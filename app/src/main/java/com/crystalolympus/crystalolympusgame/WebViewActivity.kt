@@ -40,8 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.crystalolympus.crystalolympusgame.core.AudioEngine
-import com.crystalolympus.crystalolympusgame.core.GameSound
+import com.crystalolympus.crystalolympusgame.engine.AudioEngine
+import com.crystalolympus.crystalolympusgame.engine.GameSound
 import com.crystalolympus.crystalolympusgame.ui.components.OlympusButton
 import com.crystalolympus.crystalolympusgame.ui.components.OlympusButtonStyle
 import com.crystalolympus.crystalolympusgame.ui.components.OlympusIconButton

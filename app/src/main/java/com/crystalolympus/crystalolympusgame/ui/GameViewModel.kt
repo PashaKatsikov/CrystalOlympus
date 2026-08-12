@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import com.crystalolympus.crystalolympusgame.CrystalOlympusApp
-import com.crystalolympus.crystalolympusgame.core.AudioEngine
-import com.crystalolympus.crystalolympusgame.core.GameSound
+import com.crystalolympus.crystalolympusgame.engine.AudioEngine
+import com.crystalolympus.crystalolympusgame.engine.GameSound
 import com.crystalolympus.crystalolympusgame.data.PlayerProfile
 import com.crystalolympus.crystalolympusgame.game.GameSession
 import com.crystalolympus.crystalolympusgame.game.RunResult

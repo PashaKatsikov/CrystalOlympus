@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
-import com.crystalolympus.crystalolympusgame.core.GameAssets
-import com.crystalolympus.crystalolympusgame.core.GameSprite
+import com.crystalolympus.crystalolympusgame.engine.GameAssets
+import com.crystalolympus.crystalolympusgame.engine.GameSprite
 import com.crystalolympus.crystalolympusgame.game.model.EnemyBehaviour
 import com.crystalolympus.crystalolympusgame.ui.theme.OlympusColors
 import kotlin.math.hypot

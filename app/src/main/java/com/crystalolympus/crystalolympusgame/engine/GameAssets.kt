@@ -1,4 +1,4 @@
-package com.crystalolympus.crystalolympusgame.core
+package com.crystalolympus.crystalolympusgame.engine
 
 import android.content.Context
 import android.graphics.Bitmap

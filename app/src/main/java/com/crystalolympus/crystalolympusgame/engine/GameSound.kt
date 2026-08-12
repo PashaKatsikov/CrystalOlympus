@@ -1,4 +1,4 @@
-package com.crystalolympus.crystalolympusgame.core
+package com.crystalolympus.crystalolympusgame.engine
 
 /** Short one-shot effects played through a [android.media.SoundPool]. */
 enum class GameSound(val file: String) {

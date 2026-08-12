@@ -10,7 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.crystalolympus.crystalolympusgame.core.GameAssets
+import com.crystalolympus.crystalolympusgame.engine.GameAssets
 import com.crystalolympus.crystalolympusgame.ui.AppRoot
 import com.crystalolympus.crystalolympusgame.ui.theme.CrystalOlympusTheme
 
