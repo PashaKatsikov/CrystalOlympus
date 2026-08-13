@@ -138,7 +138,10 @@ val fcmChannelTitle = pickOne(listOf(
     "Announcements", "Rewards", "Deals", "News"
 ))
 
-val pushSnoozeSeconds   = pick(172_800L..604_800L)
+// Fixed at exactly 3 days per product spec: Skip must re-show the promo
+// precisely 3 days later, not a per-project randomized value from the range
+// the anti-fingerprint mechanism otherwise picks this from.
+val pushSnoozeSeconds   = 259_200L
 val organicGcdDelayMs   = pick(3_500L..7_500L)
 val configTimeoutMs     = pick(11_000L..22_000L)
 val attributionFirstMs  = pick(22_000L..38_000L)
