@@ -1,12 +1,10 @@
 package com.crystalolympus.crystalolympusgame.prefs
 
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.crystalolympus.crystalolympusgame.BuildConfig
 import com.crystalolympus.crystalolympusgame.R
@@ -92,7 +90,7 @@ class FcmReceiver : FirebaseMessagingService() {
     private suspend fun showNotification(title: String, body: String, url: String, imgUrl: String) {
         val ctx = applicationContext
         val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        ensureChannel(nm)
+        PushSupport.ensureChannel(ctx)
 
         val tap = Intent(ctx, LaunchGate::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -134,20 +132,6 @@ class FcmReceiver : FirebaseMessagingService() {
         withContext(Dispatchers.Main) {
             nm.notify(NOTIF_ID++, builder.build())
         }
-    }
-
-    private fun ensureChannel(nm: NotificationManager) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        if (nm.getNotificationChannel(BuildConfig.FCM_CHANNEL_ID) != null) return
-        val ch = NotificationChannel(
-            BuildConfig.FCM_CHANNEL_ID,
-            BuildConfig.FCM_CHANNEL_TITLE,
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            enableLights(true)
-            enableVibration(true)
-        }
-        nm.createNotificationChannel(ch)
     }
 
     companion object {

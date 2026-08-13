@@ -8,15 +8,13 @@ import com.crystalolympus.crystalolympusgame.net.GateResult
 import com.crystalolympus.crystalolympusgame.attr.CfgClient
 import com.crystalolympus.crystalolympusgame.pkg0.Trace
 import com.crystalolympus.crystalolympusgame.pkg0.UrlGuard
+import com.crystalolympus.crystalolympusgame.prefs.PushSupport
 import com.crystalolympus.crystalolympusgame.push.Store
 import com.crystalolympus.crystalolympusgame.push.Store.RunChannel
 import com.crystalolympus.crystalolympusgame.cfg.Uplink
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Locale
-import kotlin.coroutines.resume
 
 /**
  * The first-launch (UNDECIDED) gray/white decision, factored out of [LaunchGate] so
@@ -107,7 +105,7 @@ class GateRouter(private val activity: ComponentActivity) {
 
     private suspend fun fetchConfig(attribution: Map<String, Any?>): GateResult {
         val tracker = (activity.applicationContext as CrystalOlympusApp).trackingDispatch
-        val fcmToken = vault.fcmToken ?: getFcmToken()?.also { vault.fcmToken = it }
+        val fcmToken = PushSupport.obtainToken(activity.applicationContext)
 
         val body = tracker.buildRequestBody(
             attributionData = attribution,
@@ -118,15 +116,6 @@ class GateRouter(private val activity: ComponentActivity) {
         )
         return CfgClient().fetchChannel(body)
     }
-
-    private suspend fun getFcmToken(): String? =
-        withTimeoutOrNull(5_000L) {
-            suspendCancellableCoroutine { cont ->
-                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                    if (cont.isActive) cont.resume(if (task.isSuccessful) task.result else null)
-                }
-            }
-        }
 
     private companion object { const val TAG = "GateRouter" }
 }

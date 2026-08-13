@@ -18,10 +18,10 @@ import com.crystalolympus.crystalolympusgame.boot.SignalLostScreen
 import com.crystalolympus.crystalolympusgame.boot.OrbitShell
 import com.crystalolympus.crystalolympusgame.attr.CfgClient
 import com.crystalolympus.crystalolympusgame.prefs.PushRelay
+import com.crystalolympus.crystalolympusgame.prefs.PushSupport
 import com.crystalolympus.crystalolympusgame.push.Store
 import com.crystalolympus.crystalolympusgame.push.Store.RunChannel
 import com.crystalolympus.crystalolympusgame.cfg.Uplink
-import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -270,7 +270,7 @@ class LaunchGate : AppCompatActivity() {
 
     private suspend fun fetchConfig(attribution: Map<String, Any?>): GateResult {
         val tracker = (applicationContext as CrystalOlympusApp).trackingDispatch
-        val fcmToken = vault.fcmToken ?: getFcmToken()?.also { vault.fcmToken = it }
+        val fcmToken = PushSupport.obtainToken(applicationContext)
 
         val body = tracker.buildRequestBody(
             attributionData = attribution,
@@ -318,15 +318,6 @@ class LaunchGate : AppCompatActivity() {
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────
-
-    private suspend fun getFcmToken(): String? =
-        withTimeoutOrNull(5_000L) {
-            suspendCancellableCoroutine { cont ->
-                FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                    if (cont.isActive) cont.resume(if (task.isSuccessful) task.result else null)
-                }
-            }
-        }
 
     /**
      * The URL a notification tap carried, in either shape it can arrive in.

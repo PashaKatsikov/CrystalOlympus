@@ -7,6 +7,7 @@ import com.crystalolympus.crystalolympusgame.data.ProfileRepository
 import com.crystalolympus.crystalolympusgame.engine.AudioEngine
 import com.crystalolympus.crystalolympusgame.pkg0.Trace
 import com.crystalolympus.crystalolympusgame.pkg0.UrlGuard
+import com.crystalolympus.crystalolympusgame.prefs.PushSupport
 import com.crystalolympus.crystalolympusgame.attr.AttrHub
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
@@ -52,6 +53,15 @@ class CrystalOlympusApp : Application() {
         } catch (e: Exception) {
             Trace.w(TAG, "Firebase not configured — gray flow will still try the config POST", e)
         }
+
+        // Notifications must survive the offline-first-launch path: create the
+        // channel now so an SDK-drawn push has it even if our service never ran,
+        // and start FCM registration ASAP so the token is cached before the
+        // config POST that hands it to the backend.
+        runCatching { PushSupport.ensureChannel(this) }
+            .onFailure { Trace.w(TAG, "notification channel setup failed", it as? Exception ?: Exception(it)) }
+        PushSupport.warmUpToken(this)
+
         UrlGuard.warnIfMissing()
         trackingDispatch = AttrHub(this)
         // A throw from the SDK prime (or its native load) must not take the whole
