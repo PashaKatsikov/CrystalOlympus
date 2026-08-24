@@ -11,9 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,14 +33,19 @@ import com.crystalolympus.crystalolympusgame.engine.AudioEngine
 import com.crystalolympus.crystalolympusgame.engine.GameSound
 import com.crystalolympus.crystalolympusgame.engine.GameSprite
 import com.crystalolympus.crystalolympusgame.data.PlayerProfile
+import com.crystalolympus.crystalolympusgame.game.model.Achievement
 import com.crystalolympus.crystalolympusgame.game.model.CrystalType
 import com.crystalolympus.crystalolympusgame.game.model.EnemyType
 import com.crystalolympus.crystalolympusgame.game.model.EquipmentItem
 import com.crystalolympus.crystalolympusgame.game.model.FruitType
 import com.crystalolympus.crystalolympusgame.ui.GameViewModel
+import com.crystalolympus.crystalolympusgame.ui.components.OlympusButton
+import com.crystalolympus.crystalolympusgame.ui.components.OlympusButtonStyle
 import com.crystalolympus.crystalolympusgame.ui.components.OlympusPanel
 import com.crystalolympus.crystalolympusgame.ui.components.OlympusTabs
 import com.crystalolympus.crystalolympusgame.ui.components.SpriteImage
+import com.crystalolympus.crystalolympusgame.ui.components.StatBar
+import com.crystalolympus.crystalolympusgame.ui.theme.OlympusBrushes
 import com.crystalolympus.crystalolympusgame.ui.theme.OlympusColors
 
 private data class CollectionEntry(
@@ -48,10 +56,12 @@ private data class CollectionEntry(
     val count: Int,
 )
 
+private const val ACHIEVEMENTS_TAB = 4
+
 @Composable
 fun CollectionScreen(profile: PlayerProfile, viewModel: GameViewModel) {
     var tab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("CRYSTALS", "FRUITS", "ENEMIES", "ARTIFACTS")
+    val tabs = listOf("CRYSTALS", "FRUITS", "ENEMIES", "ARTIFACTS", "ACHIEVEMENTS")
 
     val entries = when (tab) {
         0 -> CrystalType.entries.map { type ->
@@ -69,6 +79,8 @@ fun CollectionScreen(profile: PlayerProfile, viewModel: GameViewModel) {
             CollectionEntry(type.sprite, type.displayName, type.lore, count > 0, count)
         }
 
+        ACHIEVEMENTS_TAB -> emptyList()
+
         else -> EquipmentItem.entries.map { item ->
             val unlocked = profile.isUnlocked(item)
             CollectionEntry(item.sprite, item.displayName, describeEquipment(item), unlocked, if (unlocked) 1 else 0)
@@ -76,6 +88,7 @@ fun CollectionScreen(profile: PlayerProfile, viewModel: GameViewModel) {
     }
 
     val discovered = entries.count { it.discovered }
+    val achievementsClaimed = Achievement.entries.count { it.isClaimed(profile) }
 
     ScreenBackground(GameSprite.BG_TEMPLE_FLOOR, dim = 0.68f) {
         Column(Modifier.fillMaxSize()) {
@@ -100,7 +113,11 @@ fun CollectionScreen(profile: PlayerProfile, viewModel: GameViewModel) {
                             SectionTitle(tabs[tab])
                             Spacer(Modifier.weight(1f))
                             Text(
-                                text = "Collected $discovered / ${entries.size}",
+                                text = if (tab == ACHIEVEMENTS_TAB) {
+                                    "Claimed $achievementsClaimed / ${Achievement.entries.size}"
+                                } else {
+                                    "Collected $discovered / ${entries.size}"
+                                },
                                 color = OlympusColors.TextSecondary,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
@@ -108,16 +125,117 @@ fun CollectionScreen(profile: PlayerProfile, viewModel: GameViewModel) {
                         }
                         Spacer(Modifier.height(8.dp))
 
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(132.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.fillMaxSize(),
-                        ) {
-                            items(entries) { entry -> CollectionCard(entry) }
+                        if (tab == ACHIEVEMENTS_TAB) {
+                            AchievementsList(profile, viewModel)
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Adaptive(132.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.fillMaxSize(),
+                            ) {
+                                items(entries) { entry -> CollectionCard(entry) }
+                            }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AchievementsList(profile: PlayerProfile, viewModel: GameViewModel) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(Achievement.entries) { achievement -> AchievementRow(achievement, profile, viewModel) }
+    }
+}
+
+@Composable
+private fun AchievementRow(achievement: Achievement, profile: PlayerProfile, viewModel: GameViewModel) {
+    val progress = achievement.progress(profile)
+    val claimed = achievement.isClaimed(profile)
+    val claimable = achievement.isClaimable(profile)
+
+    OlympusPanel(
+        modifier = Modifier.fillMaxWidth(),
+        borderColor = if (claimable) OlympusColors.Gold else OlympusColors.PanelBorder,
+        contentPadding = 10.dp,
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                SpriteImage(
+                    achievement.sprite,
+                    Modifier.size(40.dp),
+                    alpha = if (claimed) 0.45f else 1f,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = achievement.displayName.uppercase(),
+                    color = OlympusColors.TextPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Black,
+                )
+                Text(
+                    text = achievement.description,
+                    color = OlympusColors.TextMuted,
+                    fontSize = 10.sp,
+                )
+                Spacer(Modifier.height(5.dp))
+                StatBar(
+                    fraction = progress.toFloat() / achievement.target.toFloat(),
+                    brush = OlympusBrushes.ProgressBar,
+                    modifier = Modifier.fillMaxWidth(),
+                    height = 8.dp,
+                    label = "$progress / ${achievement.target}",
+                )
+            }
+
+            Spacer(Modifier.width(10.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                SpriteImage(GameSprite.REWARD_COIN, Modifier.size(16.dp))
+                Text("+${achievement.coinReward}", color = OlympusColors.GoldBright, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                if (achievement.gemReward > 0) {
+                    Spacer(Modifier.width(4.dp))
+                    SpriteImage(GameSprite.REWARD_GEM, Modifier.size(16.dp))
+                    Text("+${achievement.gemReward}", color = OlympusColors.GoldBright, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            Spacer(Modifier.width(12.dp))
+
+            when {
+                claimed -> Text(
+                    text = "CLAIMED",
+                    color = OlympusColors.Success,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.width(88.dp),
+                    textAlign = TextAlign.Center,
+                )
+
+                claimable -> OlympusButton(
+                    text = "CLAIM",
+                    onClick = { viewModel.claimAchievement(achievement) },
+                    style = OlympusButtonStyle.Gold,
+                    modifier = Modifier.width(88.dp).height(38.dp),
+                )
+
+                else -> Text(
+                    text = "LOCKED",
+                    color = OlympusColors.TextMuted,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black,
+                    modifier = Modifier.width(88.dp),
+                    textAlign = TextAlign.Center,
+                )
             }
         }
     }

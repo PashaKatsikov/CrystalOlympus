@@ -3,7 +3,9 @@ package com.crystalolympus.crystalolympusgame.ui.screens
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -110,7 +113,7 @@ fun BattleScreen(profile: PlayerProfile, viewModel: GameViewModel) {
         when (session.phase) {
             GamePhase.PAUSED -> PauseOverlay(session, viewModel)
             GamePhase.BLESSING -> BlessingOverlay(session)
-            GamePhase.VICTORY, GamePhase.DEFEAT -> ResultOverlay(session, viewModel)
+            GamePhase.VICTORY, GamePhase.DEFEAT -> ResultOverlay(session, profile, viewModel)
             else -> Unit
         }
     }
@@ -570,51 +573,84 @@ private fun BlessingOverlay(session: GameSession) {
     }
 }
 
+/**
+ * Everything here is sized to fit one landscape screen with no scrolling: a compact header, a single
+ * dense stats+rewards row, and the action buttons. Nothing may grow the panel taller than that, or
+ * the buttons that let the player leave the screen end up pushed off-screen.
+ */
 @Composable
-private fun ResultOverlay(session: GameSession, viewModel: GameViewModel) {
+private fun ResultOverlay(session: GameSession, profile: PlayerProfile, viewModel: GameViewModel) {
     val result = session.result ?: return
     val victory = result.victory
+    val isNewBestWave = result.waveReached > profile.bestWave
+    val enemiesDefeatedTotal = result.enemiesDefeated.values.sum()
+    val crystalBreakdown = result.crystalsByType.entries.filter { it.value > 0 }.sortedBy { it.key.ordinal }
 
     Box(
-        Modifier.fillMaxSize().background(OlympusColors.Scrim),
+        Modifier.fillMaxSize().background(OlympusColors.Scrim).padding(12.dp),
         contentAlignment = Alignment.Center,
     ) {
         OlympusPanel(
-            modifier = Modifier.width(340.dp),
+            modifier = Modifier.fillMaxWidth(0.88f).widthIn(max = 640.dp),
             borderColor = if (victory) OlympusColors.Gold else OlympusColors.Danger,
-            contentPadding = 18.dp,
+            contentPadding = 16.dp,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = if (victory) "VICTORY!" else "DEFEAT",
                     color = if (victory) OlympusColors.GoldBright else OlympusColors.Danger,
-                    fontSize = 26.sp,
+                    fontSize = 21.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 3.sp,
                 )
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.height(2.dp))
                 Text(
-                    text = if (victory) {
-                        "${result.zone.displayName} has been restored"
-                    } else {
-                        "You fell on wave ${result.waveReached}"
+                    text = buildString {
+                        append(
+                            if (victory) {
+                                "${result.zone.displayName} has been restored"
+                            } else {
+                                "You fell on wave ${result.waveReached}"
+                            },
+                        )
+                        if (isNewBestWave) append("   \u2726 NEW BEST WAVE")
                     },
-                    color = OlympusColors.TextSecondary,
-                    fontSize = 11.sp,
+                    color = if (isNewBestWave) OlympusColors.Divine else OlympusColors.TextSecondary,
+                    fontSize = 10.sp,
+                    fontWeight = if (isNewBestWave) FontWeight.Bold else FontWeight.Normal,
+                    textAlign = TextAlign.Center,
                 )
 
-                Spacer(Modifier.height(14.dp))
-                SectionTitle("REWARDS")
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    RewardChip(GameSprite.REWARD_COIN, result.coins)
-                    RewardChip(GameSprite.CRYSTAL_LIGHTNING, result.crystals)
-                    if (result.gems > 0) RewardChip(GameSprite.REWARD_GEM, result.gems)
-                    RewardChip(GameSprite.ARTIFACT_ZEUS_SEAL, result.experience)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        SummaryStat("WAVE", "${result.waveReached}/${session.hud.totalWaves}")
+                        SummaryStat("TIME", formatDuration(result.durationSeconds))
+                        SummaryStat("SLAIN", enemiesDefeatedTotal.toString())
+                    }
+
+                    Spacer(Modifier.width(14.dp))
+                    Box(Modifier.width(1.dp).height(34.dp).background(OlympusColors.PanelBorder))
+                    Spacer(Modifier.width(14.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f, fill = false).horizontalScroll(rememberScrollState()),
+                    ) {
+                        RewardChip(GameSprite.REWARD_COIN, result.coins, compact = true)
+                        RewardChip(GameSprite.CRYSTAL_LIGHTNING, result.crystals, compact = true)
+                        if (result.gems > 0) RewardChip(GameSprite.REWARD_GEM, result.gems, compact = true)
+                        RewardChip(GameSprite.ARTIFACT_ZEUS_SEAL, result.experience, compact = true)
+                        crystalBreakdown.forEach { (type, count) -> RewardChip(type.sprite, count, compact = true) }
+                    }
                 }
 
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(16.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     if (!victory) {
                         OlympusButton(
@@ -635,23 +671,41 @@ private fun ResultOverlay(session: GameSession, viewModel: GameViewModel) {
 }
 
 @Composable
-private fun RewardChip(sprite: GameSprite, amount: Int) {
+private fun SummaryStat(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, color = OlympusColors.TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        Spacer(Modifier.height(2.dp))
+        Text(value, color = OlympusColors.TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Black)
+    }
+}
+
+private fun formatDuration(seconds: Float): String {
+    val total = seconds.toInt().coerceAtLeast(0)
+    val minutes = total / 60
+    val secs = total % 60
+    return "%d:%02d".format(minutes, secs)
+}
+
+@Composable
+private fun RewardChip(sprite: GameSprite, amount: Int, compact: Boolean = false) {
+    val boxSize = if (compact) 38.dp else 48.dp
+    val iconSize = if (compact) 26.dp else 34.dp
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             Modifier
-                .size(48.dp)
+                .size(boxSize)
                 .clip(RoundedCornerShape(10.dp))
                 .background(OlympusBrushes.PanelRaised)
                 .border(1.dp, OlympusColors.PanelBorder, RoundedCornerShape(10.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            SpriteImage(sprite, Modifier.size(34.dp))
+            SpriteImage(sprite, Modifier.size(iconSize))
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(3.dp))
         Text(
             text = formatAmount(amount),
             color = OlympusColors.GoldBright,
-            fontSize = 11.sp,
+            fontSize = if (compact) 10.sp else 11.sp,
             fontWeight = FontWeight.Bold,
         )
     }

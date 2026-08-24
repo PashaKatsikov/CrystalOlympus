@@ -11,6 +11,9 @@ import com.crystalolympus.crystalolympusgame.engine.GameSound
 import com.crystalolympus.crystalolympusgame.data.PlayerProfile
 import com.crystalolympus.crystalolympusgame.game.GameSession
 import com.crystalolympus.crystalolympusgame.game.RunResult
+import com.crystalolympus.crystalolympusgame.game.model.Achievement
+import com.crystalolympus.crystalolympusgame.game.model.DailyReward
+import com.crystalolympus.crystalolympusgame.game.model.DailyRewards
 import com.crystalolympus.crystalolympusgame.game.model.EquipmentItem
 import com.crystalolympus.crystalolympusgame.game.model.UpgradeNode
 import com.crystalolympus.crystalolympusgame.game.model.Zone
@@ -35,6 +38,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     var screen by mutableStateOf<Screen>(Screen.MainMenu)
         private set
     var settingsOpen by mutableStateOf(false)
+        private set
+    var dailyRewardOpen by mutableStateOf(false)
         private set
     var session by mutableStateOf<GameSession?>(null)
         private set
@@ -181,6 +186,73 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         AudioEngine.play(GameSound.REWARD)
         return Triple(coins, crystals, gems)
     }
+
+    // --- Achievements -------------------------------------------------------------------------------
+
+    /** Grants the reward for [achievement] exactly once. Returns false if it was not ready to claim. */
+    fun claimAchievement(achievement: Achievement): Boolean {
+        val current = profile.value
+        if (!achievement.isClaimable(current)) return false
+
+        repository.update {
+            it.copy(
+                coins = it.coins + achievement.coinReward,
+                gems = it.gems + achievement.gemReward,
+                claimedAchievements = it.claimedAchievements + achievement.name,
+            )
+        }
+        AudioEngine.play(GameSound.REWARD)
+        return true
+    }
+
+    // --- Daily reward -------------------------------------------------------------------------------
+
+    /** Opens the daily reward dialog if today's reward is still waiting. Safe to call repeatedly. */
+    fun maybeShowDailyReward() {
+        if (canClaimDaily()) dailyRewardOpen = true
+    }
+
+    fun closeDailyReward() {
+        AudioEngine.play(GameSound.MENU_CLOSE)
+        dailyRewardOpen = false
+    }
+
+    fun canClaimDaily(): Boolean = profile.value.lastDailyClaimEpochDay != DailyRewards.currentEpochDay()
+
+    /** The reward waiting right now, and how many of the 7 cycle days are already lit from this streak. */
+    fun pendingDailyReward(): Pair<DailyReward, Int> {
+        val current = profile.value
+        val today = DailyRewards.currentEpochDay()
+        val continuing = current.lastDailyClaimEpochDay == today - 1
+        val day = nextStreakDay(current, continuing)
+        val litDays = if (continuing) current.dailyStreak else 0
+        return DailyRewards.rewardForDay(day) to litDays
+    }
+
+    fun claimDaily() {
+        val current = profile.value
+        val today = DailyRewards.currentEpochDay()
+        if (current.lastDailyClaimEpochDay == today) return
+
+        val continuing = current.lastDailyClaimEpochDay == today - 1
+        val day = nextStreakDay(current, continuing)
+        val reward = DailyRewards.rewardForDay(day)
+
+        repository.update {
+            it.copy(
+                coins = it.coins + reward.coins,
+                gems = it.gems + reward.gems,
+                dailyStreak = day,
+                lastDailyClaimEpochDay = today,
+            )
+        }
+        AudioEngine.play(GameSound.REWARD)
+        dailyRewardOpen = false
+    }
+
+    /** Day 1 if the streak was broken (or never started), otherwise the next day in the 7-day cycle. */
+    private fun nextStreakDay(profile: PlayerProfile, continuing: Boolean): Int =
+        if (continuing) (profile.dailyStreak % 7) + 1 else 1
 
     // --- Settings ---------------------------------------------------------------------------------------
 

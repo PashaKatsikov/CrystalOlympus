@@ -279,10 +279,14 @@ android {
         }
     }
 
+    val obfuscate = (findProperty("obfuscate") as String?)
+        ?.equals("true", ignoreCase = true)
+        ?: true
+
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = obfuscate
+            isShrinkResources = obfuscate
             signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
