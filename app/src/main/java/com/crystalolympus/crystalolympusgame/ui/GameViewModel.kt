@@ -11,6 +11,7 @@ import com.crystalolympus.crystalolympusgame.core.GameSound
 import com.crystalolympus.crystalolympusgame.data.PlayerProfile
 import com.crystalolympus.crystalolympusgame.game.GameSession
 import com.crystalolympus.crystalolympusgame.game.RunResult
+import com.crystalolympus.crystalolympusgame.game.model.Achievement
 import com.crystalolympus.crystalolympusgame.game.model.EquipmentItem
 import com.crystalolympus.crystalolympusgame.game.model.UpgradeNode
 import com.crystalolympus.crystalolympusgame.game.model.Zone
@@ -180,6 +181,24 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         AudioEngine.play(GameSound.REWARD)
         return Triple(coins, crystals, gems)
+    }
+
+    // --- Achievements -------------------------------------------------------------------------------
+
+    /** Grants the reward for [achievement] exactly once. Returns false if it was not ready to claim. */
+    fun claimAchievement(achievement: Achievement): Boolean {
+        val current = profile.value
+        if (!achievement.isClaimable(current)) return false
+
+        repository.update {
+            it.copy(
+                coins = it.coins + achievement.coinReward,
+                gems = it.gems + achievement.gemReward,
+                claimedAchievements = it.claimedAchievements + achievement.name,
+            )
+        }
+        AudioEngine.play(GameSound.REWARD)
+        return true
     }
 
     // --- Settings ---------------------------------------------------------------------------------------

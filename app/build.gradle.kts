@@ -27,8 +27,8 @@ android {
         applicationId = "com.crystalolympus.crystalolympusgame"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 5
+        versionName = "1.0.1"
         resourceConfigurations += listOf("en")
     }
 
@@ -75,6 +75,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -99,6 +100,11 @@ dependencies {
 
     implementation(libs.androidx.webkit)
     implementation(libs.kotlinx.serialization.json)
+
+    // Install attribution analytics only (organic vs. non-organic on the AppsFlyer dashboard).
+    // No config endpoint, no WebView routing, nothing in the app branches on the result.
+    implementation("com.appsflyer:af-android-sdk:6.18.0")
+    implementation("com.android.installreferrer:installreferrer:2.2")
 
     debugImplementation(libs.androidx.ui.tooling)
 }

@@ -15,3 +15,9 @@
 -keepclasseswithmembers class com.crystalolympus.crystalolympusgame.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+# AppsFlyer (install attribution analytics)
+-keep class com.appsflyer.** { *; }
+-dontwarn com.appsflyer.**
+-keep class com.android.installreferrer.** { *; }
+-dontwarn com.android.installreferrer.**

@@ -28,6 +28,7 @@ data class PlayerProfile(
     val fruitsFound: Map<String, Int> = emptyMap(),
     val enemiesDefeated: Map<String, Int> = emptyMap(),
     val artifactsFound: Set<String> = emptySet(),
+    val claimedAchievements: Set<String> = emptySet(),
     val soundEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
     val highQuality: Boolean = true,

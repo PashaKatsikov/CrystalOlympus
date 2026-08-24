@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.crystalolympus.crystalolympusgame.BuildConfig
 import com.crystalolympus.crystalolympusgame.WebViewActivity
 import com.crystalolympus.crystalolympusgame.core.AudioEngine
 import com.crystalolympus.crystalolympusgame.core.GameSound
@@ -157,7 +158,7 @@ fun SettingsDialog(profile: PlayerProfile, viewModel: GameViewModel) {
 
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text = "Crystal Olympus  \u2022  version 1.0.0",
+                    text = "Crystal Olympus  \u2022  version ${BuildConfig.VERSION_NAME}",
                     color = OlympusColors.TextMuted,
                     fontSize = 9.sp,
                     modifier = Modifier.fillMaxWidth(),
