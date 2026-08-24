@@ -10,12 +10,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.crystalolympus.crystalolympusgame.ui.screens.BattleScreen
 import com.crystalolympus.crystalolympusgame.ui.screens.CollectionScreen
+import com.crystalolympus.crystalolympusgame.ui.screens.DailyRewardDialog
 import com.crystalolympus.crystalolympusgame.ui.screens.HeroScreen
 import com.crystalolympus.crystalolympusgame.ui.screens.MainMenuScreen
 import com.crystalolympus.crystalolympusgame.ui.screens.SettingsDialog
@@ -29,8 +31,13 @@ fun AppRoot(viewModel: GameViewModel = viewModel()) {
     val profile by viewModel.profile.collectAsState()
     val screen = viewModel.screen
 
-    BackHandler(enabled = screen != Screen.MainMenu || viewModel.settingsOpen) {
+    LaunchedEffect(Unit) {
+        viewModel.maybeShowDailyReward()
+    }
+
+    BackHandler(enabled = screen != Screen.MainMenu || viewModel.settingsOpen || viewModel.dailyRewardOpen) {
         when {
+            viewModel.dailyRewardOpen -> viewModel.closeDailyReward()
             viewModel.settingsOpen -> viewModel.closeSettings()
             screen is Screen.Battle -> viewModel.session?.pause()
             else -> viewModel.backToMenu()
@@ -56,6 +63,10 @@ fun AppRoot(viewModel: GameViewModel = viewModel()) {
 
         if (viewModel.settingsOpen) {
             SettingsDialog(profile, viewModel)
+        }
+
+        if (viewModel.dailyRewardOpen) {
+            DailyRewardDialog(viewModel)
         }
     }
 }

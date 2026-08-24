@@ -29,6 +29,8 @@ data class PlayerProfile(
     val enemiesDefeated: Map<String, Int> = emptyMap(),
     val artifactsFound: Set<String> = emptySet(),
     val claimedAchievements: Set<String> = emptySet(),
+    val dailyStreak: Int = 0,
+    val lastDailyClaimEpochDay: Long = -1L,
     val soundEnabled: Boolean = true,
     val vibrationEnabled: Boolean = true,
     val highQuality: Boolean = true,
