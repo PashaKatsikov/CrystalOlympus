@@ -26,7 +26,7 @@
 #     install is seen as a first launch. Pick it once, before the first build.
 gray.seed = CHANGE-ME-EVERY-PROJECT
 
-# Which of the three interchangeable codec shapes Secrets.kt implements.
+# Which of the three interchangeable codec shapes Cloak.kt implements.
 # rebrand.py rewrites both this line and the decoder body together; the build
 # fails if the two disagree, so never edit it by hand.
 gray.codecVariant = 1

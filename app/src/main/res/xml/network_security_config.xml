@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Cleartext stays permitted because the shell follows whatever redirect chain
+    the operator's link hands it, and those chains still pass through plain http
+    hops on some partner domains. Blocking them turns a working link into a
+    blank page, and there is nothing private in the redirect itself.
+
+    Only the system trust store is used: no pinning, and no bundled or
+    user-installed CAs, so a device with a rogue root cannot be told to trust it
+    from here.
+-->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>

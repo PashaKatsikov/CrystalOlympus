@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Secondary button: translucent so the artwork behind it still reads, with the
+    accent only as an outline. Colours match atl_btn_accept and are likewise
+    per-project.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#CC0E1119" />
+    <corners android:radius="24dp" />
+    <stroke android:width="2dp" android:color="#FFD24A" />
+</shape>

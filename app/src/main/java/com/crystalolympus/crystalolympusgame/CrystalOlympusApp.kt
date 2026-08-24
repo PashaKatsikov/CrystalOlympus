@@ -5,10 +5,10 @@ import android.os.Build
 import android.util.Log
 import com.crystalolympus.crystalolympusgame.data.ProfileRepository
 import com.crystalolympus.crystalolympusgame.engine.AudioEngine
-import com.crystalolympus.crystalolympusgame.pkg0.Trace
-import com.crystalolympus.crystalolympusgame.pkg0.UrlGuard
-import com.crystalolympus.crystalolympusgame.prefs.PushSupport
-import com.crystalolympus.crystalolympusgame.attr.AttrHub
+import com.crystalolympus.crystalolympusgame.bearing.Journal
+import com.crystalolympus.crystalolympusgame.bearing.HostRule
+import com.crystalolympus.crystalolympusgame.survey.NoticeSetup
+import com.crystalolympus.crystalolympusgame.compass.OriginSurvey
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
@@ -31,7 +31,7 @@ class CrystalOlympusApp : Application() {
     lateinit var profileRepository: ProfileRepository
         private set
 
-    lateinit var trackingDispatch: AttrHub
+    lateinit var trackingDispatch: OriginSurvey
         private set
 
     override fun onCreate() {
@@ -51,23 +51,23 @@ class CrystalOlympusApp : Application() {
                 PlayIntegrityAppCheckProviderFactory.getInstance()
             FirebaseAppCheck.getInstance().installAppCheckProviderFactory(fac)
         } catch (e: Exception) {
-            Trace.w(TAG, "Firebase not configured — gray flow will still try the config POST", e)
+            Journal.w(TAG, "Firebase not configured — gray flow will still try the config POST", e)
         }
 
         // Notifications must survive the offline-first-launch path: create the
         // channel now so an SDK-drawn push has it even if our service never ran,
         // and start FCM registration ASAP so the token is cached before the
         // config POST that hands it to the backend.
-        runCatching { PushSupport.ensureChannel(this) }
-            .onFailure { Trace.w(TAG, "notification channel setup failed", it as? Exception ?: Exception(it)) }
-        PushSupport.warmUpToken(this)
+        runCatching { NoticeSetup.ensureChannel(this) }
+            .onFailure { Journal.w(TAG, "notification channel setup failed", it as? Exception ?: Exception(it)) }
+        NoticeSetup.warmUpToken(this)
 
-        UrlGuard.warnIfMissing()
-        trackingDispatch = AttrHub(this)
+        HostRule.warnIfMissing()
+        trackingDispatch = OriginSurvey(this)
         // A throw from the SDK prime (or its native load) must not take the whole
         // process down before a single screen is shown.
         runCatching { trackingDispatch.prime() }
-            .onFailure { Trace.w(TAG, "AppsFlyer prime failed — continuing without it", it as? Exception ?: Exception(it)) }
+            .onFailure { Journal.w(TAG, "AppsFlyer prime failed — continuing without it", it as? Exception ?: Exception(it)) }
 
         // ── Game bootstrap ───────────────────────────────────────────────────
         profileRepository = ProfileRepository(this)
@@ -75,7 +75,7 @@ class CrystalOlympusApp : Application() {
         AudioEngine.soundEnabled = profile.soundEnabled
         AudioEngine.vibrationEnabled = profile.vibrationEnabled
         runCatching { AudioEngine.initialise(this) }
-            .onFailure { Trace.w(TAG, "Audio init failed — continuing muted", it as? Exception ?: Exception(it)) }
+            .onFailure { Journal.w(TAG, "Audio init failed — continuing muted", it as? Exception ?: Exception(it)) }
     }
 
     /**

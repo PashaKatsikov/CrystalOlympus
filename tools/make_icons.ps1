@@ -18,7 +18,8 @@ public static class IconMaker
     // Renders the source into a canvasSize square, the artwork covering contentFraction of it.
     public static void Render(string source, string outFile, int canvasSize, double contentFraction)
     {
-        var decoder = BitmapDecoder.Create(new Uri(source), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+        string fullPath = Path.GetFullPath(source);
+        var decoder = BitmapDecoder.Create(new Uri(fullPath), BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
         BitmapSource frame = decoder.Frames[0];
 
         double content = canvasSize * contentFraction;
@@ -58,6 +59,6 @@ foreach ($density in $densities.Keys) {
 
     [IconMaker]::Render($Source, "$ResDir\mipmap-$density\ic_launcher.png", $legacySize, 1.0)
     [IconMaker]::Render($Source, "$ResDir\mipmap-$density\ic_launcher_round.png", $legacySize, 1.0)
-    [IconMaker]::Render($Source, "$ResDir\mipmap-$density\ic_launcher_foreground.png", $adaptiveSize, 0.68)
+    [IconMaker]::Render($Source, "$ResDir\mipmap-$density\ic_launcher_foreground.png", $adaptiveSize, (72.0 / 108.0))
     Write-Output "$density -> legacy ${legacySize}px, adaptive ${adaptiveSize}px"
 }

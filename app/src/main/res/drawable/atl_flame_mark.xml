@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Notification glyph. A monochrome silhouette, so the path data is the whole
+    file and two projects sharing a path share the file byte for byte — which
+    is what the stock Material flame did across the portfolio.
+
+    Drawn as three tongues rather than one: a tall centre with a shorter lick
+    either side, rising from a rounded bowl. Kept inside x 5.2-18.8 and
+    y 2.4-20.8 so the status bar's own inset has room and nothing clips.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12.3,2.2
+            C12.6,5.2 13.8,7.1 15.0,8.9
+            C15.8,7.6 16.3,6.0 16.4,4.2
+            C18.4,7.1 19.1,10.4 19.1,13.4
+            C19.1,17.8 16.0,21.3 12.0,21.3
+            C8.0,21.3 4.9,17.8 4.9,13.4
+            C4.9,10.4 5.6,7.1 7.6,4.2
+            C7.7,6.0 8.2,7.6 9.0,8.9
+            C10.2,7.1 12.0,5.2 12.3,2.2 Z" />
+</vector>

@@ -49,13 +49,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.crystalolympus.crystalolympusgame.boot.OptInPrompt
-import com.crystalolympus.crystalolympusgame.boot.OrbitShell
-import com.crystalolympus.crystalolympusgame.boot.SignalLostScreen
+import com.crystalolympus.crystalolympusgame.terrain.ConsentCard
+import com.crystalolympus.crystalolympusgame.terrain.MeridianView
+import com.crystalolympus.crystalolympusgame.terrain.LinkDownCard
 import com.crystalolympus.crystalolympusgame.engine.GameAssets
 import com.crystalolympus.crystalolympusgame.engine.GameSprite
-import com.crystalolympus.crystalolympusgame.push.Store
-import com.crystalolympus.crystalolympusgame.view.GateRouter
+import com.crystalolympus.crystalolympusgame.almanac.Cartouche
+import com.crystalolympus.crystalolympusgame.meridian.LandfallDecision
 import com.crystalolympus.crystalolympusgame.ui.theme.CrystalOlympusTheme
 import com.crystalolympus.crystalolympusgame.ui.theme.OlympusBrushes
 import com.crystalolympus.crystalolympusgame.ui.theme.OlympusColors
@@ -68,7 +68,7 @@ import kotlin.math.min
  * and shows real progress while doing it, then hands over to [MainActivity].
  *
  * On an organic first launch it also runs the gray/white decision in the background
- * (see [GateRouter]) so it is the single loading screen the user sees — the bar only
+ * (see [LandfallDecision]) so it is the single loading screen the user sees — the bar only
  * fills to 100% once both the assets are ready and the decision is in, and the screen
  * that follows is the game, the shell, or the offline screen accordingly.
  */
@@ -91,13 +91,13 @@ class LoadingActivity : ComponentActivity() {
      * @param outcome null means "just the game" (a returning native user, or any
      *   launch not carrying the resolve flag); otherwise it is the resolved verdict.
      */
-    private fun go(outcome: GateRouter.Outcome?) {
+    private fun go(outcome: LandfallDecision.Outcome?) {
         val next = when (outcome) {
-            is GateRouter.Outcome.Gray -> grayIntent(outcome.url)
-            is GateRouter.Outcome.Offline ->
-                Intent(this, SignalLostScreen::class.java).apply {
+            is LandfallDecision.Outcome.Gray -> grayIntent(outcome.url)
+            is LandfallDecision.Outcome.Offline ->
+                Intent(this, LinkDownCard::class.java).apply {
                     if (!outcome.savedUrl.isNullOrBlank())
-                        putExtra(SignalLostScreen.EXTRA_RETURN_URL, outcome.savedUrl)
+                        putExtra(LinkDownCard.EXTRA_RETURN_URL, outcome.savedUrl)
                 }
             else -> Intent(this, MainActivity::class.java)
         }
@@ -109,11 +109,11 @@ class LoadingActivity : ComponentActivity() {
 
     /** Notification opt-in screen first, if it is still due; otherwise the shell. */
     private fun grayIntent(url: String): Intent {
-        val vault = Store(applicationContext)
+        val vault = Cartouche(applicationContext)
         return if (vault.shouldShowNotifScreen()) {
-            Intent(this, OptInPrompt::class.java).putExtra(OptInPrompt.EXTRA_TARGET_URL, url)
+            Intent(this, ConsentCard::class.java).putExtra(ConsentCard.EXTRA_TARGET_URL, url)
         } else {
-            Intent(this, OrbitShell::class.java).putExtra(OrbitShell.EXTRA_STREAM_URL, url)
+            Intent(this, MeridianView::class.java).putExtra(MeridianView.EXTRA_STREAM_URL, url)
         }
     }
 
@@ -131,14 +131,14 @@ class LoadingActivity : ComponentActivity() {
     }
 
     companion object {
-        /** Set by [com.crystalolympus.crystalolympusgame.view.LaunchGate] on an
+        /** Set by [com.crystalolympus.crystalolympusgame.meridian.Landfall] on an
          *  organic first launch: run the gray decision here, not on a splash ahead. */
         const val EXTRA_RESOLVE_GATE = "resolve_gate"
     }
 }
 
 @Composable
-private fun LoadingScreen(resolveGate: Boolean, onFinished: (GateRouter.Outcome?) -> Unit) {
+private fun LoadingScreen(resolveGate: Boolean, onFinished: (LandfallDecision.Outcome?) -> Unit) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -152,7 +152,7 @@ private fun LoadingScreen(resolveGate: Boolean, onFinished: (GateRouter.Outcome?
     // bar is not allowed to finish until it is in. When we are not resolving (a
     // returning native user), the gate is "ready" from the start and the outcome
     // stays null, meaning "straight to the game".
-    var gateOutcome by remember { mutableStateOf<GateRouter.Outcome?>(null) }
+    var gateOutcome by remember { mutableStateOf<LandfallDecision.Outcome?>(null) }
     var gateReady by remember { mutableStateOf(!resolveGate) }
 
     val screenLongestEdge = with(configuration) {
@@ -176,8 +176,8 @@ private fun LoadingScreen(resolveGate: Boolean, onFinished: (GateRouter.Outcome?
         if (resolveGate) {
             launch {
                 val activity = context as ComponentActivity
-                gateOutcome = runCatching { GateRouter(activity).resolveFirstLaunch() }
-                    .getOrDefault(GateRouter.Outcome.Native)
+                gateOutcome = runCatching { LandfallDecision(activity).resolveFirstLaunch() }
+                    .getOrDefault(LandfallDecision.Outcome.Native)
                 gateReady = true
             }
         }

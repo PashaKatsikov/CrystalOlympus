@@ -43,20 +43,20 @@
              the manifest placeholder below. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_notif_flame" />
+            android:resource="@drawable/atl_flame_mark" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="${grayFcmChannelId}" />
 
         <!-- ══ LAUNCHER: gray/white router (shows the splash, decides the mode) ══ -->
         <activity
-            android:name=".view.LaunchGate"
+            android:name=".meridian.Landfall"
             android:exported="true"
             android:launchMode="singleTop"
             android:screenOrientation="sensor"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.App.WindowGlue">
+            android:theme="@style/Theme.App.ScreenFit">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -68,7 +68,7 @@
         </activity>
 
         <activity
-            android:name=".boot.OrbitShell"
+            android:name=".terrain.MeridianView"
             android:exported="false"
             android:launchMode="singleTask"
             android:screenOrientation="sensor"
@@ -77,22 +77,22 @@
             android:theme="@style/Theme.App.Stream" />
 
         <activity
-            android:name=".boot.OptInPrompt"
+            android:name=".terrain.ConsentCard"
             android:exported="false"
             android:screenOrientation="sensor"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.App.WindowGlue" />
+            android:theme="@style/Theme.App.ScreenFit" />
 
         <activity
-            android:name=".boot.SignalLostScreen"
+            android:name=".terrain.LinkDownCard"
             android:exported="false"
             android:screenOrientation="sensor"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.App.WindowGlue" />
+            android:theme="@style/Theme.App.ScreenFit" />
 
         <!-- ══ WHITE (native game) ══════════════════════════════════════════ -->
         <!-- Loading screen is the game's entry; goNative() routes here. It is no
-             longer the launcher — LaunchGate decides who reaches it. -->
+             longer the launcher — Landfall decides who reaches it. -->
         <activity
             android:name=".LoadingActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode|density|fontScale"
@@ -114,7 +114,7 @@
             android:screenOrientation="sensorLandscape" />
 
         <service
-            android:name=".prefs.FcmReceiver"
+            android:name=".survey.NoticeService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />

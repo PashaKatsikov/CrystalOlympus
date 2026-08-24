@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Primary button. The palette is per-project: the stock gold
+    (#FFD700 / #FFA500 / #CC7A00) shipped unchanged in several apps, which made
+    this file byte-identical between them and the buttons identical in a
+    screenshot. Same family, different values.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="90"
+        android:startColor="#FFD24A"
+        android:centerColor="#F0A128"
+        android:endColor="#B86D0F"
+        android:type="linear" />
+    <corners android:radius="24dp" />
+    <stroke android:width="1dp" android:color="#FFE58C" />
+</shape>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Blocks Auto Backup and Device-to-Device transfer from copying app data.
-  A returning install must decide its channel fresh on the new device — a
-  transferred STREAM url or push URL is a security risk (an old server answer
-  turning up on someone else's phone) and a fingerprint join (the same
-  encrypted preferences file cluster across devices).
+  Neither Auto Backup nor Device-to-Device transfer may carry this app's data
+  anywhere. An install arriving on a new handset has to reach its own routing
+  decision there: a copied destination or push URL means an answer one server
+  gave about one device showing up on somebody else's, and it also drags the
+  same encrypted preferences file across every device the user owns.
 -->
 <data-extraction-rules>
     <cloud-backup>

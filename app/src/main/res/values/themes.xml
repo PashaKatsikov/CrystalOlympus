@@ -19,7 +19,7 @@
         <item name="android:navigationBarColor">@color/bg_dark</item>
     </style>
 
-    <style name="Theme.App.WindowGlue" parent="Theme.App">
+    <style name="Theme.App.ScreenFit" parent="Theme.App">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
@@ -27,7 +27,7 @@
     <!--
         WebView host theme. Disables the launch-preview window so no white/system
         flash is visible while the WebView initialises or when the user navigates
-        away from a page (see kotlin_orb_pitfalls.mdc #8).
+        away from a page (see kotlin_atl_pitfalls.mdc #8).
     -->
     <style name="Theme.App.Stream" parent="Theme.App">
         <item name="android:windowFullscreen">true</item>

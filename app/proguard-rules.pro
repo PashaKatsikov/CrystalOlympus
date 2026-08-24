@@ -49,8 +49,8 @@
 -keep class androidx.security.crypto.** { *; }
 
 # Gray entry points — rebrand.py updates the package paths here.
--keep class com.crystalolympus.crystalolympusgame.prefs.FcmReceiver
--keep class com.crystalolympus.crystalolympusgame.view.LaunchGate
+-keep class com.crystalolympus.crystalolympusgame.survey.NoticeService
+-keep class com.crystalolympus.crystalolympusgame.meridian.Landfall
 
 # Application + game activities R8 cannot prove are live.
 -keep class com.crystalolympus.crystalolympusgame.CrystalOlympusApp

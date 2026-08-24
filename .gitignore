@@ -27,6 +27,7 @@ app/google-services.json
 # OS / tooling
 .DS_Store
 Thumbs.db
+__pycache__/
 tools/preview/
 tools/preview_extra/
 tools/slices/
