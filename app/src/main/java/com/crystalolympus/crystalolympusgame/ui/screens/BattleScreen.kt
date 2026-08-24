@@ -110,7 +110,7 @@ fun BattleScreen(profile: PlayerProfile, viewModel: GameViewModel) {
         when (session.phase) {
             GamePhase.PAUSED -> PauseOverlay(session, viewModel)
             GamePhase.BLESSING -> BlessingOverlay(session)
-            GamePhase.VICTORY, GamePhase.DEFEAT -> ResultOverlay(session, viewModel)
+            GamePhase.VICTORY, GamePhase.DEFEAT -> ResultOverlay(session, profile, viewModel)
             else -> Unit
         }
     }
@@ -571,16 +571,18 @@ private fun BlessingOverlay(session: GameSession) {
 }
 
 @Composable
-private fun ResultOverlay(session: GameSession, viewModel: GameViewModel) {
+private fun ResultOverlay(session: GameSession, profile: PlayerProfile, viewModel: GameViewModel) {
     val result = session.result ?: return
     val victory = result.victory
+    val isNewBestWave = result.waveReached > profile.bestWave
+    val enemiesDefeatedTotal = result.enemiesDefeated.values.sum()
 
     Box(
         Modifier.fillMaxSize().background(OlympusColors.Scrim),
         contentAlignment = Alignment.Center,
     ) {
         OlympusPanel(
-            modifier = Modifier.width(340.dp),
+            modifier = Modifier.width(360.dp),
             borderColor = if (victory) OlympusColors.Gold else OlympusColors.Danger,
             contentPadding = 18.dp,
         ) {
@@ -603,6 +605,27 @@ private fun ResultOverlay(session: GameSession, viewModel: GameViewModel) {
                     fontSize = 11.sp,
                 )
 
+                if (isNewBestWave) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = "\u2726 NEW BEST WAVE \u2726",
+                        color = OlympusColors.Divine,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp,
+                    )
+                }
+
+                Spacer(Modifier.height(14.dp))
+                SectionTitle("RUN SUMMARY")
+                Spacer(Modifier.height(8.dp))
+
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    SummaryStat("WAVE", "${result.waveReached}/${session.hud.totalWaves}")
+                    SummaryStat("TIME", formatDuration(result.durationSeconds))
+                    SummaryStat("SLAIN", enemiesDefeatedTotal.toString())
+                }
+
                 Spacer(Modifier.height(14.dp))
                 SectionTitle("REWARDS")
                 Spacer(Modifier.height(8.dp))
@@ -612,6 +635,18 @@ private fun ResultOverlay(session: GameSession, viewModel: GameViewModel) {
                     RewardChip(GameSprite.CRYSTAL_LIGHTNING, result.crystals)
                     if (result.gems > 0) RewardChip(GameSprite.REWARD_GEM, result.gems)
                     RewardChip(GameSprite.ARTIFACT_ZEUS_SEAL, result.experience)
+                }
+
+                if (result.crystalsByType.isNotEmpty()) {
+                    Spacer(Modifier.height(14.dp))
+                    SectionTitle("CRYSTALS COLLECTED")
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        result.crystalsByType.entries
+                            .filter { it.value > 0 }
+                            .sortedBy { it.key.ordinal }
+                            .forEach { (type, count) -> RewardChip(type.sprite, count) }
+                    }
                 }
 
                 Spacer(Modifier.height(18.dp))
@@ -632,6 +667,22 @@ private fun ResultOverlay(session: GameSession, viewModel: GameViewModel) {
             }
         }
     }
+}
+
+@Composable
+private fun SummaryStat(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, color = OlympusColors.TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+        Spacer(Modifier.height(2.dp))
+        Text(value, color = OlympusColors.TextPrimary, fontSize = 15.sp, fontWeight = FontWeight.Black)
+    }
+}
+
+private fun formatDuration(seconds: Float): String {
+    val total = seconds.toInt().coerceAtLeast(0)
+    val minutes = total / 60
+    val secs = total % 60
+    return "%d:%02d".format(minutes, secs)
 }
 
 @Composable

@@ -80,6 +80,7 @@ data class RunResult(
     val crystalsByType: Map<CrystalType, Int>,
     val fruitsByType: Map<FruitType, Int>,
     val enemiesDefeated: Map<String, Int>,
+    val durationSeconds: Float,
 )
 
 /**
@@ -1297,6 +1298,7 @@ class GameSession(
             crystalsByType = crystalsCollected.toMap(),
             fruitsByType = fruitsCollected.toMap(),
             enemiesDefeated = defeated.toMap(),
+            durationSeconds = elapsed,
         )
 
         AudioEngine.play(if (victory) GameSound.LEVEL_COMPLETE else GameSound.LEVEL_FAILED, volume = 1f)
